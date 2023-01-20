@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\blinky-back-end.props" />
+</Project>
