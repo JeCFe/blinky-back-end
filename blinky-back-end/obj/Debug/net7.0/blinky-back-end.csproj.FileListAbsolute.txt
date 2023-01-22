@@ -24,3 +24,9 @@ C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debu
 C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debug\net7.0\blinky-back-end.pdb
 C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debug\net7.0\blinky-back-end.genruntimeconfig.cache
 C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debug\net7.0\ref\blinky-back-end.dll
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\bin\Debug\net7.0\Microsoft.OpenApi.dll
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\bin\Debug\net7.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\bin\Debug\net7.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\bin\Debug\net7.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debug\net7.0\blinky-back-end.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\Jessica.Fealy\Documents\github\blinky-back-end\blinky-back-end\obj\Debug\net7.0\blinky-back-end.csproj.CopyComplete
