@@ -7,11 +7,15 @@ builder.Services.AddCors(options => {
     });
 });
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
     c.SwaggerDoc("v1", new() {Title="Spike Api", Version="v1"});});
 
 var app = builder.Build();
+
+app.MapHealthChecks("/healthz");
 
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/test", () => "Testing");
