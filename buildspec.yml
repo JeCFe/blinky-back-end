@@ -1,7 +1,7 @@
 version: 0.2
 
 phases:
-  pre-build:
+  pre_build:
     commands:
       - echo Cloud Formation
       - aws cloudformation deploy --template-file cloudformation.yml --stack-name Blinky-Backend
