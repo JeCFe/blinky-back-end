@@ -21,6 +21,123 @@ Resources:
               - "ecr:InitiateLayerUpload"
               - "ecr:UploadLayerPart"
               - "ecr:CompleteLayerUpload"
+  ECSCluster:
+    Type: "AWS::ECS::Cluster"
+    Properties:
+      ClusterName: BlinkyCluster
+  ECSTaskDefinition:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties:
+      ExecutionRoleArn: !Ref "FargateRole"
+      RequiresCompatibilities:
+        - "FARGATE"
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: "awsvpc"
+      ContainerDefinitions:
+        - Image: !Sub "${ECRRepo.RepositoryUri}:latest"
+          Name: "Blinky-Backend-Task"
+          MemoryReservation: 256
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 5000
+              Protocol: tcp
+  FargateALB:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      Name: FargateALB
+      Subnets:
+        - subnet-0ad8947174d7d384e
+        - subnet-0f1b8feb4edd42cf7
+      Type: application
+      SecurityGroups:
+        - !GetAtt FargateALBSG.GroupId
+
+  FargateTargetGroup:
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      Name: FargateTargetGroup
+      VpcId: vpc-090116da170347b2d
+      Protocol: HTTP
+      Port: 5000
+      HealthCheckPath: /healthz
+      TargetType: ip
+  Listener:
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref FargateTargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref FargateALB
+      Port: 80
+      Protocol: HTTP
+  FargateALBSG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: SG for the Fargate ALB
+      GroupName: FargateAlbSG
+      SecurityGroupIngress:
+        - CidrIpv6: ::/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+          Description: "Inbound rule for IPv6 traffic"
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: TCP
+          Description: "Inbound rule for IPv4 traffic"
+
+  Alb2FargateContainers:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: SG for traffic between ALB and containers
+      GroupName: Alb2FargateContainers
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          SourceSecurityGroupId: !GetAtt FargateALBSG.GroupId
+          Description: "Inbound rule for all traffic"
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Listener
+    Properties:
+      LaunchType: FARGATE
+      Cluster: !Ref "ECSCluster"
+      DesiredCount: 1
+      TaskDefinition: !Ref "ECSTaskDefinition"
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !GetAtt Alb2FargateContainers.GroupId
+          Subnets: ["subnet-0ad8947174d7d384e", "subnet-0f1b8feb4edd42cf7"]
+      LoadBalancers:
+        - TargetGroupArn: !Ref "FargateTargetGroup"
+          ContainerPort: 5000
+          ContainerName: Blinky-Backend-Task
+
+  FargateRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonECS_FullAccess
 
 Outputs:
   RepoURI:
