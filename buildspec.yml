@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  pre-build:
+    commands:
+      - echo Cloud Formation
+      - aws cloudformation deploy --template-file cloudformation.yml --stack-name Blinky-Backend
+  build:
+    commands:
+      - echo Building Docker Image
+      - repoURI=$(aws cloudformation describe-stacks --query "Stacks[?StackName=='Blinky-Backend'][].Outputs[?OutputKey=='RepoURI'].OutputValue" --output text)
+      - aws ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+      - docker build -t ${repoURI}:latest .
+      - docker push ${repoURI}:latest
