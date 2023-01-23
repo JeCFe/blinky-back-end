@@ -27,4 +27,4 @@ Outputs:
     Value: !GetAtt
       - ECRRepo
       - RepositoryUri
-    description: Getting repo uri
+    Description: Getting repo uri
