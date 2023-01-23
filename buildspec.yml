@@ -9,6 +9,8 @@ phases:
     commands:
       - echo Building Docker Image
       - repoURI=$(aws cloudformation describe-stacks --query "Stacks[?StackName=='Blinky-Backend'][].Outputs[?OutputKey=='RepoURI'].OutputValue" --output text)
-      - aws ecr get-login-password | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+      - awsAccountID=${aws sts get-caller-identity --query "Account" --output text}
+      - awsRegion=${aws configure get region}
+      - aws ecr get-login-password | docker login --username AWS --password-stdin ${awsAccountID}.dkr.ecr.${awsRegion}.amazonaws.com
       - docker build -t ${repoURI}:latest .
       - docker push ${repoURI}:latest
