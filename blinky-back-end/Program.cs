@@ -1,10 +1,11 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options => {
-    options.AddPolicy(name: "PolicyOne", 
-    policy => {
-        policy.AllowAnyOrigin();
-    });
+    options.AddDefaultPolicy(
+        policy => {
+            policy.AllowAnyOrigin();
+        }
+    );
 });
 
 builder.Services.AddHealthChecks();
@@ -20,7 +21,7 @@ app.MapHealthChecks("/healthz");
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/test", () => "Testing");
 
-app.UseCors("PolicyOne");
+app.UseCors();
 
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint(
