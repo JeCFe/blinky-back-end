@@ -1,0 +1,13 @@
+version: 0.2
+
+phases:
+  pre-build:
+    commands:
+      - echo Cloud Formation
+      - aws cloudformation deploy --template-file cloudformation.yml --stack-name Blinky-Backend
+  build:
+    commands:
+      - echo Building Docker Image
+      - repoURI=$(aws cloudformation describe-stacks --query "Stacks[?StackName=='Blinky-Backend'][].Outputs[?OutputKey=='RepoURI'].OutputValue" --output text)
+      - docker build -t ${repoURI}/blinky-backend-image:latest .
+      - docker push ${repoURI}/blinky-backend-image:latest
