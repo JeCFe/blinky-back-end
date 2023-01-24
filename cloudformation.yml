@@ -4,27 +4,12 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: "blinky-backend"
-      RepositoryPolicyText:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: AllowPushPull
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub "arn:aws:iam::${AWS::AccountId}:user/Jessica"
-                - !Sub "arn:aws:iam::${AWS::AccountId}:user/Michal"
-            Action:
-              - "ecr:GetDownloadUrlForLayer"
-              - "ecr:BatchGetImage"
-              - "ecr:BatchCheckLayerAvailability"
-              - "ecr:PutImage"
-              - "ecr:InitiateLayerUpload"
-              - "ecr:UploadLayerPart"
-              - "ecr:CompleteLayerUpload"
+
   ECSCluster:
     Type: "AWS::ECS::Cluster"
     Properties:
       ClusterName: BlinkyCluster
+
   ECSTaskDefinition:
     Type: "AWS::ECS::TaskDefinition"
     Properties:
@@ -42,6 +27,7 @@ Resources:
           PortMappings:
             - ContainerPort: 5000
               Protocol: tcp
+
   FargateALB:
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
     Properties:
@@ -62,6 +48,7 @@ Resources:
       Port: 5000
       HealthCheckPath: /healthz
       TargetType: ip
+
   Listener:
     Type: "AWS::ElasticLoadBalancingV2::Listener"
     Properties:
@@ -71,6 +58,7 @@ Resources:
       LoadBalancerArn: !Ref FargateALB
       Port: 80
       Protocol: HTTP
+
   FargateALBSG:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
@@ -81,12 +69,12 @@ Resources:
           FromPort: 80
           ToPort: 80
           IpProtocol: TCP
-          Description: "Inbound rule for IPv6 traffic"
+          Description: "Inbound rule for HTTP IPv6 traffic"
         - CidrIp: 0.0.0.0/0
           FromPort: 80
           ToPort: 80
           IpProtocol: TCP
-          Description: "Inbound rule for IPv4 traffic"
+          Description: "Inbound rule for HTTP IPv4 traffic"
 
   Alb2FargateContainers:
     Type: "AWS::EC2::SecurityGroup"
@@ -94,9 +82,12 @@ Resources:
       GroupDescription: SG for traffic between ALB and containers
       GroupName: Alb2FargateContainers
       SecurityGroupIngress:
-        - IpProtocol: "-1"
+        - FromPort: 5000
+          ToPort: 5000
+          IpProtocol: TCP
           SourceSecurityGroupId: !GetAtt FargateALBSG.GroupId
-          Description: "Inbound rule for all traffic"
+          Description: "Inbound rule for TCP 5000 load balancer traffic"
+
   ECSService:
     Type: AWS::ECS::Service
     DependsOn:
@@ -139,9 +130,48 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
         - arn:aws:iam::aws:policy/AmazonECS_FullAccess
 
+  CloudFrontCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        DefaultTTL: 1
+        MaxTTL: 1
+        MinTTL: 1
+        Name: 1-second-cache
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: all
+          EnableAcceptEncodingGzip: true
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt FargateALB.DNSName
+            Id: !GetAtt FargateALB.DNSName
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+        Enabled: true
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        DefaultCacheBehavior:
+          AllowedMethods: [POST, HEAD, PATCH, DELETE, PUT, GET, OPTIONS]
+          CachePolicyId: !Ref CloudFrontCachePolicy
+          TargetOriginId: !GetAtt FargateALB.DNSName
+          ViewerProtocolPolicy: redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
 Outputs:
   RepoURI:
-    Value: !GetAtt
-      - ECRRepo
-      - RepositoryUri
-    Description: Getting repo uri
+    Value: !GetAtt ECRRepo.RepositoryUri
+    Description: ECR repository URI
+  BackEndURL:
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+    Description: Blinky back-end URL
