@@ -45,16 +45,26 @@ app.MapGet("/AllDesks", async (DeskDb db) =>
 
 app.MapPost("/BookDesk", async (DeskDb db, Desk requestDesk) =>
 {
-    var desk = await db.desks.FindAsync(requestDesk.deskId);
-    if (desk.isAvailable == false) { return Results.Conflict(); }
-    desk.assignedName = requestDesk.assignedName;
-    desk.isAvailable = false;
-    await db.SaveChangesAsync();
-    return Results.Accepted();
+    try
+    {
+        var desk = await db.desks.FindAsync(requestDesk.deskId);
+        if (desk.isAvailable == false) { return Results.Conflict(); }
+        desk.assignedName = requestDesk.assignedName;
+        desk.isAvailable = false;
+        await db.SaveChangesAsync();
+        return Results.Accepted();
+    }
+    catch
+    {
+        return Results.BadRequest();
+    }
 })
 .Produces(StatusCodes.Status202Accepted)
-.Produces(StatusCodes.Status409Conflict);
+.Produces(StatusCodes.Status409Conflict)
+.Produces(StatusCodes.Status400BadRequest);
 
+
+// TODO: Check for duplicate desk additions 
 app.MapPut("/AddDesk", async (Desk desk, DeskDb db) =>
 {
     db.desks.Add(desk);
@@ -62,5 +72,15 @@ app.MapPut("/AddDesk", async (Desk desk, DeskDb db) =>
     return Results.Created($"/AddDesk", desk);
 })
 .Produces(StatusCodes.Status201Created);
+
+// TODO: Try catch for unknown desks (bad request)
+app.MapPost("/RemoveBooking", async (DeskDb db, Desk requestDesk) =>
+{
+    var desk = await db.desks.FindAsync(requestDesk.deskId);
+    desk.assignedName = null;
+    desk.isAvailable = false;
+    await db.SaveChangesAsync();
+    return Results.Accepted();
+});
 
 app.Run();
