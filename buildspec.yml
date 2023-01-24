@@ -7,7 +7,7 @@ phases:
       - awsAccountID=$(aws sts get-caller-identity --query "Account" --output text)
       - aws ecr get-login-password | docker login --username AWS --password-stdin ${awsAccountID}.dkr.ecr.us-east-1.amazonaws.com
       - echo Cloud Formation
-      - aws cloudformation deploy --template-file cloudformation.yml --stack-name Blinky-Backend
+      - aws cloudformation deploy --template-file cloudformation.yml --stack-name Blinky-Backend --capabilities CAPABILITY_NAMED_IAM
   build:
     commands:
       - echo Building Docker Image
