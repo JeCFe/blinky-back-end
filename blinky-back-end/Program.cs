@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Models;
-using RoomController;
+using Model;
+using Microsoft.EntityFrameworkCore;
 
 #region BuilderConfig
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<DeskDb>(opt => opt.UseInMemoryDatabase("DeskList"));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
@@ -32,56 +35,32 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint(
 app.MapHealthChecks("/healthz");
 #endregion
 
-//Create dummy room 
-
-Room room = new Room();
-room.RoomId = "RoomA";
-room.desks = new Desk[] { new Desk { deskId = "D1", assignedTo = "Bob" }, new Desk { deskId = "D2" }, new Desk { deskId = "D3", assignedTo = "Sarah" } };
-
-Room[] rooms = new Room[] { room };
-
-RController roomController = new RController(rooms);
-
-app.MapPost("/GetAllRoomIds", () =>
+app.MapGet("/AllDesks", async (DeskDb db) =>
 {
-    return roomController.GetAllRoomIds();
+    AllDesksResponse response = new AllDesksResponse();
+    response.desks = await db.desks.ToListAsync();
+    return Results.Ok(response);
 })
-.Produces<GetRoomIdsResponse>(StatusCodes.Status200OK);
+.Produces<AllDesksResponse>(StatusCodes.Status200OK);
 
-app.MapPost("/GetRoomData", (GetRoomRequest request) =>
+app.MapPost("/BookDesk", async (DeskDb db, Desk requestDesk) =>
 {
-    GetRoomDataResponse? response = roomController.GetRoomData(request);
-    return response switch
-    {
-        null => Results.NotFound(),
-        _ => TypedResults.Ok(response)
-    };
-})
-.Produces<GetRoomDataResponse>(StatusCodes.Status200OK)
-.Produces(StatusCodes.Status404NotFound);
-
-app.MapPost("/BookDesk", (BookDeskRequest request) =>
-{
-    return roomController.BookDesk(request) switch
-    {
-        true => Results.Accepted(),
-        false => Results.Conflict()
-    };
+    var desk = await db.desks.FindAsync(requestDesk.deskId);
+    if (desk.isAvailable == false) { return Results.Conflict(); }
+    desk.assignedName = requestDesk.assignedName;
+    desk.isAvailable = false;
+    await db.SaveChangesAsync();
+    return Results.Accepted();
 })
 .Produces(StatusCodes.Status202Accepted)
 .Produces(StatusCodes.Status409Conflict);
 
-app.MapPost("/DeleteAllBookingsInRoom", (GetRoomRequest request) =>
+app.MapPut("/AddDesk", async (Desk desk, DeskDb db) =>
 {
-    return roomController.DeleteAllBookingsInRoom(request) switch
-    {
-        true => Results.Accepted(),
-        false => Results.NotFound()
-    };
+    db.desks.Add(desk);
+    await db.SaveChangesAsync();
+    return Results.Created($"/AddDesk", desk);
 })
-.Produces(StatusCodes.Status202Accepted)
-.Produces(StatusCodes.Status404NotFound);
-
-
+.Produces(StatusCodes.Status201Created);
 
 app.Run();
