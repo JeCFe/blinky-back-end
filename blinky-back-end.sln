@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "blinky-back-end", "blinky-back-end\blinky-back-end.csproj", "{D8FA0DF5-A1BC-4649-86DA-A610FAEE2804}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIUnitTests", "APIUnitTests\APIUnitTests.csproj", "{BF88548E-B670-4188-967A-50C760A7F8D3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D8FA0DF5-A1BC-4649-86DA-A610FAEE2804}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8FA0DF5-A1BC-4649-86DA-A610FAEE2804}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8FA0DF5-A1BC-4649-86DA-A610FAEE2804}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8FA0DF5-A1BC-4649-86DA-A610FAEE2804}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF88548E-B670-4188-967A-50C760A7F8D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF88548E-B670-4188-967A-50C760A7F8D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF88548E-B670-4188-967A-50C760A7F8D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF88548E-B670-4188-967A-50C760A7F8D3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
