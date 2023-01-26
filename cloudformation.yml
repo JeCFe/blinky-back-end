@@ -93,6 +93,7 @@ Resources:
     DependsOn:
       - Listener
     Properties:
+      ServiceName: "Blinky-Backend-Service"
       LaunchType: FARGATE
       Cluster: !Ref "ECSCluster"
       DesiredCount: 1

@@ -18,3 +18,4 @@ phases:
       - repoURI=$(aws cloudformation describe-stacks --query "Stacks[?StackName=='Blinky-Backend'][].Outputs[?OutputKey=='RepoURI'].OutputValue" --output text)
       - docker build -t 836428984343.dkr.ecr.us-east-1.amazonaws.com/blinky-backend:latest .
       - docker push 836428984343.dkr.ecr.us-east-1.amazonaws.com/blinky-backend:latest
+      - aws ecs update-service --cluster BlinkyCluster --service Blinky-Backend-Service --force-new-deployment
