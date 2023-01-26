@@ -1,8 +1,8 @@
-namespace Model{
-    public class Desk
-    {
-        public string deskId { get; set; }
-        public string? assignedName { get; set; }
-        public bool isAvailable { get; set; }
-    }
+namespace Blinky_Back_End.Model;
+
+public class Desk
+{
+    public string DeskId { get; set; }
+    public string? AssignedName { get; set; }
+    public bool IsAvailable { get; set; }
 }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Model;
+using Blinky_Back_End.Model;
 
+namespace Blinky_Back_End;
 class DeskDb : DbContext
 {
     public DeskDb(DbContextOptions<DeskDb> options)

@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Model;
+using Blinky_Back_End.Model;
 using Microsoft.EntityFrameworkCore;
 
+using Blinky_Back_End;
 public class Program
 {
     public static void Main(string[] args)
@@ -53,29 +54,27 @@ public class Program
         })
         .Produces<AllDesksResponse>(StatusCodes.Status200OK);
 
-        app.MapPost("/BookDesk", async (DeskDb db, string deskId, string assignedName) =>
+        app.MapPost("/BookDesk", async (DeskDb db, string DeskId, string AssignedName) =>
         {
             try
             {
-                var desk = await db.desks.FindAsync(deskId);
-                if (desk.isAvailable == false) { return Results.Conflict(); }
-                desk.assignedName = assignedName;
-                desk.isAvailable = false;
+                var desk = await db.desks.FindAsync(DeskId);
+                if (desk.AssignedName == null) { return Results.Conflict(); }
+                desk.AssignedName = AssignedName;
+                desk.IsAvailable = false;
                 await db.SaveChangesAsync();
-                return Results.Accepted();
+                return Results.Ok();
             }
             catch
             {
                 return Results.BadRequest();
             }
         })
-        .Produces(StatusCodes.Status202Accepted)
+        .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status400BadRequest);
 
-
-        // TODO: Check for duplicate desk additions 
-        app.MapPut("/AddDesk", async (Desk desk, DeskDb db) =>
+        app.MapPost("/AddDesk", async (Desk desk, DeskDb db) =>
         {
             try
             {
@@ -87,29 +86,25 @@ public class Program
             {
                 return Results.BadRequest();
             }
-
         })
         .Produces(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest);
 
-        // TODO: Try catch for unknown desks (bad request)
-        app.MapPost("/RemoveBooking", async (DeskDb db, Desk requestDesk) =>
+        app.MapPost("/RemoveBooking", async (DeskDb db, Desk RequestDesk) =>
         {
             try
             {
-                var desk = await db.desks.FindAsync(requestDesk.deskId);
-                desk.assignedName = "";
-                desk.isAvailable = true;
+                var desk = await db.desks.FindAsync(RequestDesk.DeskId);
+                desk.AssignedName = null;
                 await db.SaveChangesAsync();
-                return Results.Accepted();
+                return Results.Ok();
             }
             catch
             {
                 return Results.BadRequest();
             }
-
         })
-        .Produces(StatusCodes.Status202Accepted)
+        .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
         app.Run();
@@ -119,11 +114,10 @@ public class Program
         {
             for (int i = 0; i < 16; i++)
             {
-                db.Add(new Desk { deskId = "desk" + i.ToString(), assignedName = "", isAvailable = true });
+                db.Add(new Desk { DeskId = "desk" + i.ToString(), AssignedName = "", IsAvailable = true });
             }
             await db.SaveChangesAsync();
         }
-
     }
 
 }
