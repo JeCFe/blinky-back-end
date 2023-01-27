@@ -16,6 +16,7 @@ public class Booking
     public DateOnly Date { get; set; } = new DateOnly();
     [Required]
     public Desk Desk { get; set; } = new Desk();
+    public Guid DeskId { get; set; }
 
 
 }

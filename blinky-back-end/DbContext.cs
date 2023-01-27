@@ -9,13 +9,14 @@ class BookingDb : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Room>()
-        .HasMany(room => room.Desks);
-
         modelBuilder.Entity<Desk>()
-                .HasMany(Desk => Desk.Bookings);
+        .HasOne(desk => desk.Room);
 
+        modelBuilder.Entity<Booking>()
+        .HasOne(booking => booking.Desk);
 
+        modelBuilder.Entity<Booking>()
+        .HasKey(o => new { o.DeskId, o.Date });
     }
 
     public DbSet<Booking> bookings => Set<Booking>();

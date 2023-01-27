@@ -13,6 +13,7 @@ public class Program
         builder.Services.AddDbContext<BookingDb>(opt => opt.UseInMemoryDatabase("DeskList"));
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+
         builder.Services.AddCors(options =>
         {
             options.AddDefaultPolicy(
@@ -28,6 +29,7 @@ public class Program
         {
             c.SwaggerDoc("v1", new() { Title = "Blinky-Backend", Version = "v1" });
         });
+        builder.Services.Configure<JsonOptions>(options => options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
         #endregion
 
         #region appSetup
@@ -37,8 +39,13 @@ public class Program
 
         var scope = app.Services.CreateScope();
         var service = scope.ServiceProvider.GetService<BookingDb>();
+
+
         SeedInitaliseDeskData(service);
-        Console.WriteLine(JsonSerializer.Serialize(service));
+
+        Display(service);
+        ViewBooking(service);
+
 
         app.UseCors();
         app.UseSwagger();
@@ -47,6 +54,46 @@ public class Program
         ));
         app.MapHealthChecks("/healthz");
         #endregion
+
+        app.MapGet("/Rooms", async (BookingDb db) =>
+        {
+            var rooms = db.rooms.ToListAsync();
+            return Results.Ok(rooms);
+        });
+
+        app.MapGet("/Rooms/{roomId}", async (BookingDb db, Guid roomId, DateOnly? date) =>
+        {
+            var searchDate = date ?? DateOnly.FromDateTime(DateTime.Now);
+            var bookedDesks = await db.bookings.Where((x) => x.Desk.Room.Id == roomId && x.Date == searchDate).ToListAsync();
+            var allDesks = await db.desks.Where((x) => x.Room.Id == roomId).ToListAsync();
+            ViewDesksResponse response = new ViewDesksResponse(bookedDesks, allDesks);
+            return Results.Ok(response);
+        });
+
+        app.MapPost("/book", async (BookingDb db, Guid deskId, string userName, DateOnly date) =>
+        {
+            var desk = await db.desks.SingleOrDefaultAsync<Desk>(d => d.Id == deskId);
+            if (desk == null) { return Results.BadRequest(); }
+
+            Booking booking = new()
+            {
+                Desk = desk,
+                AssignedName = userName,
+                Date = date
+            };
+            db.bookings.Add(booking);
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (ArgumentException e)
+            {
+                return Results.Conflict();
+            }
+
+            return Results.Ok();
+        });
+
 
         /*  app.MapPost("/AllDesks", async (BookingDb db, AllDesksRequest data) =>
          { */
@@ -139,9 +186,44 @@ public class Program
 
         app.Run();
 
+        async void ViewBooking(BookingDb db)
+        {
+
+            var bookings = db.bookings.Where((booking) => booking.AssignedName == "Jessica");
+            Console.WriteLine(JsonSerializer.Serialize(bookings));
+        }
+
+        async void Display(BookingDb Db)
+        {
+            var room = Db.rooms.FirstAsync((room) => room.Name == "TestRoom");
+            Console.WriteLine(JsonSerializer.Serialize(room));
+
+            var desk = Db.desks.FirstAsync((desk) => desk.Name == "test0");
+            Console.WriteLine(JsonSerializer.Serialize(desk));
+
+            Booking book = new Booking();
+
+            book.Desk = await Db.desks.FirstAsync((desk) => desk.Name == "test0");
+            book.AssignedName = "Jessica";
+            book.Date = DateOnly.FromDateTime(DateTime.Now);
+            Db.bookings.Add(book);
+            await Db.SaveChangesAsync();
+        }
+
 
         async void SeedInitaliseDeskData(BookingDb db)
         {
+            Room r = new Room();
+            r.Name = "TestRoom";
+
+            db.rooms.Add(r);
+
+            for (int i = 0; i < 9; i++)
+            {
+                db.desks.Add(new Desk { Name = "test" + i.ToString(), Room = r });
+            }
+            db.SaveChangesAsync();
+
 
             /*             Room r = new Room();
                         r.Name = "Room1";

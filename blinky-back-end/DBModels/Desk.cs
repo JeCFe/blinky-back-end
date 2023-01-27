@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Blinky_Back_End.DbModels;
 
@@ -12,8 +13,8 @@ public class Desk
     [Required]
     public string Name { get; set; }
     [Required]
+    [JsonIgnore]
     public Room Room { get; set; } = new Room();
-    public List<Booking> Bookings { get; set; } = new List<Booking>();
 
 }
 
