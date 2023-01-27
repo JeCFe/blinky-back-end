@@ -10,3 +10,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - 5000:5000
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    ports:
+      - 33060:33060
+      - 3306:3306

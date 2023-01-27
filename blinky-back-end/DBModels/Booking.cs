@@ -7,8 +7,9 @@ namespace Blinky_Back_End.DbModels;
 
 public class Booking
 {
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
     [Required]
     public string AssignedName { get; set; }
