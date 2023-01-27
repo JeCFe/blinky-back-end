@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Blinky_Back_End.Model;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Blinky_Back_End.DbModels;
 using Blinky_Back_End;
 public class Program
 {
@@ -9,7 +10,7 @@ public class Program
     {
         #region BuilderConfig
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddDbContext<DeskDb>(opt => opt.UseInMemoryDatabase("DeskList"));
+        builder.Services.AddDbContext<BookingDb>(opt => opt.UseInMemoryDatabase("DeskList"));
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
         builder.Services.AddCors(options =>
@@ -35,8 +36,9 @@ public class Program
         var app = builder.Build();
 
         var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetService<DeskDb>();
+        var service = scope.ServiceProvider.GetService<BookingDb>();
         SeedInitaliseDeskData(service);
+        Console.WriteLine(JsonSerializer.Serialize(service));
 
         app.UseCors();
         app.UseSwagger();
@@ -46,15 +48,43 @@ public class Program
         app.MapHealthChecks("/healthz");
         #endregion
 
-        app.MapGet("/AllDesks", async (DeskDb db) =>
-        {
-            AllDesksResponse response = new AllDesksResponse();
-            response.desks = await db.desks.ToListAsync();
-            return Results.Ok(response);
-        })
-        .Produces<AllDesksResponse>(StatusCodes.Status200OK);
+        /*  app.MapPost("/AllDesks", async (BookingDb db, AllDesksRequest data) =>
+         { */
+        /* string key = "123";
 
-        app.MapPost("/BookDesk", async (DeskDb db, string DeskId, string AssignedName) =>
+        try
+        {
+            Console.WriteLine(JsonSerializer.Serialize(db.DateDesks));
+            var period = await db.DateDesks.Include((x) => x.desks).FirstAsync((booking) => booking.Id == key);
+            AllDesksResponse response = new AllDesksResponse();
+            Console.WriteLine("here");
+
+            Console.WriteLine(JsonSerializer.Serialize(period));
+            BookingDate date = new BookingDate { day = period.day, month = period.month, year = period.year };
+            response.date = date;
+            //response.test = period.desks.Count();
+            //Console.WriteLine(period.desks);
+            response.desks = period.desks;
+            await db.SaveChangesAsync();
+            return Results.Ok(response);
+        }
+        catch (Exception error)
+        {
+            Console.WriteLine(error.Message);
+            return Results.BadRequest();
+            /* SeedInitaliseDeskData(db, data.date);
+            var period = await db.DateDesks.AsNoTracking().FirstAsync((booking) => booking.BookingId == key);
+            AllDesksResponse response = new AllDesksResponse();
+            BookingDate date = new BookingDate { day = period.day, month = period.month, year = period.year };
+            response.date = date;
+            response.desks = period.desks;
+            await db.SaveChangesAsync();
+            return Results.Ok(response); */
+        //}
+        //});
+        //.Produces<AllDesksResponse>(StatusCodes.Status200OK);
+
+        /* app.MapPost("/BookDesk", async (BookingDb db, BookDeskRequest booking) =>
         {
             try
             {
@@ -74,7 +104,7 @@ public class Program
         .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("/AddDesk", async (Desk desk, DeskDb db) =>
+        app.MapPost("/AddDesk", async (Desk desk, BookingDb db) =>
         {
             try
             {
@@ -90,7 +120,7 @@ public class Program
         .Produces(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("/RemoveBooking", async (DeskDb db, Desk RequestDesk) =>
+        app.MapPost("/RemoveBooking", async (BookingDb db, Desk RequestDesk) =>
         {
             try
             {
@@ -105,18 +135,52 @@ public class Program
             }
         })
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest); */
 
         app.Run();
 
 
-        async void SeedInitaliseDeskData(DeskDb db)
+        async void SeedInitaliseDeskData(BookingDb db)
         {
+
+            /*             Room r = new Room();
+                        r.Name = "Room1";
+
+                        db.rooms.Add(r);
+                        db.SaveChangesAsync(); */
+
+
+            /* BookingLayout entry = new BookingLayout();
+            entry.desks = new List<Desk>();
+            if (date == null)
+            {
+                entry.day = "1";
+                entry.month = "2";
+                entry.year = "1999";
+            }
+            else
+            {
+                entry.day = date.day;
+                entry.month = date.month;
+                entry.year = date.year;
+            }
+            entry.Id = "123";
+
             for (int i = 0; i < 16; i++)
             {
-                db.Add(new Desk { DeskId = "desk" + i.ToString(), AssignedName = "", IsAvailable = true });
+                string dName = "desk" + i.ToString();
+                entry.desks.Add(new Desk { Id = dName + entry.Id, DeskName = dName, AssignedName = "", IsAvailable = true });
             }
+            //Console.WriteLine(entry);
+            //Console.WriteLine(JsonSerializer.Serialize(entry));
+
+            db.Add(entry);
+
             await db.SaveChangesAsync();
+            //Console.WriteLine(JsonSerializer.Serialize(db.DateDesks));
+            var period = await db.DateDesks.FindAsync("123");
+            Console.WriteLine(JsonSerializer.Serialize(period)); */
+
         }
     }
 
