@@ -47,3 +47,12 @@ Spinning up premade docker image
 ```
 
 This will run the api service on http://localhost:5000.
+
+## Update datebase migrations
+
+To update the database migrations, run the follow code snippits
+
+```bash
+  dotnet ef migrations add <Descriptive name of changes>
+  dotnet ef database update
+```

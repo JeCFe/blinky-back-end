@@ -95,16 +95,28 @@ public class Program
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status409Conflict);
 
+        app.MapPost("/updatePosition", async (BookingDb db, Guid deskId, int x, int y) =>
+        {
+            var desk = await db.desks.SingleOrDefaultAsync<Desk>(d => d.Id == deskId);
+            if (desk == null) { return Results.BadRequest(); }
+            desk.posX = x;
+            desk.posY = y;
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        })
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest);
+
         app.Run();
 
         async void SeedInitaliseDeskData(BookingDb db)
         {
             Room r = new Room();
-            r.Name = "TestRoom";
+            r.Name = "NewPositionalDesks";
             db.rooms.Add(r);
             for (int i = 0; i < 9; i++)
             {
-                db.desks.Add(new Desk { Name = "test" + i.ToString(), Room = r });
+                db.desks.Add(new Desk { Name = "test" + i.ToString(), Room = r, posX = 10, posY = 10 });
             }
             await db.SaveChangesAsync();
         }

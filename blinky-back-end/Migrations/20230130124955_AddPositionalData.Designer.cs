@@ -3,6 +3,7 @@ using System;
 using Blinky_Back_End;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace blinkybackend.Migrations
 {
     [DbContext(typeof(BookingDb))]
-    partial class BookingDbModelSnapshot : ModelSnapshot
+    [Migration("20230130124955_AddPositionalData")]
+    partial class AddPositionalData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

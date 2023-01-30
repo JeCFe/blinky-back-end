@@ -12,6 +12,11 @@ public class Desk
     public Guid Id { get; set; }
     [Required]
     public string Name { get; set; }
+
+    [Required]
+    public int posX { get; set; }
+    [Required]
+    public int posY { get; set; } = 0;
     [Required]
     [JsonIgnore]
     public Room Room { get; set; } = new Room();
