@@ -8,9 +8,10 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        #region BuilderConfig
+        #region BuilderConfig 
         var builder = WebApplication.CreateBuilder(args);
-        var connectionString = builder.Configuration.GetConnectionString("db");
+        var connectionString = Environment.GetEnvironmentVariable("RDBConnectionString");
+        //var connectionString = builder.Configuration.GetConnectionString("db");
         builder.Services.AddDbContext<BookingDb>(opt => opt.UseMySql(
             connectionString,
             ServerVersion.AutoDetect(connectionString)
@@ -50,6 +51,28 @@ public class Program
         ));
         app.MapHealthChecks("/healthz");
         #endregion
+
+        app.MapPost("/GenerateRoom", async (BookingDb db, string RoomName, int AmountOfDesks) =>
+        {
+            Room r = new Room();
+            r.Name = RoomName;
+            db.rooms.Add(r);
+            for (int i = 0; i < AmountOfDesks; i++)
+            {
+                db.desks.Add(new Desk { Name = "Desk " + i.ToString() + 1, Room = r, posX = 10, posY = 10 });
+            }
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException e)
+            {
+                return Results.BadRequest();
+            }
+            return Results.Ok();
+        })
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest);
 
         app.MapGet("/Rooms", async (BookingDb db) =>
         {
