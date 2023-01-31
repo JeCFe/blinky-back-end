@@ -24,6 +24,9 @@ Resources:
           Name: "Blinky-Backend-Task"
           MemoryReservation: 256
           Memory: 512
+          Environment:
+            - Name: RDBConnectionString
+              Value: !Sub "Server=${SQLDatabase.Endpoint.Address};Port=${SQLDatabase.Endpoint.Port};Database=Blinky;Uid=Jess;Pwd={{resolve:ssm:NewRDPassword}};"
           PortMappings:
             - ContainerPort: 5000
               Protocol: tcp
@@ -169,6 +172,32 @@ Resources:
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
 
+  SQLDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: Blinky
+      VPCSecurityGroups:
+        - !GetAtt DBSG.GroupId
+      AllocatedStorage: "20"
+      MaxAllocatedStorage: 20
+      MultiAZ: false
+      DBInstanceClass: db.t2.micro
+      Engine: MySQL
+      EngineVersion: 8.0.31
+      MasterUsername: "Jess"
+      MasterUserPassword: "{{resolve:ssm-secure:RDBPwd}}"
+    DeletionPolicy: Snapshot
+
+  DBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupName: !Ref "Alb2FargateContainers"
+
 Outputs:
   RepoURI:
     Value: !GetAtt ECRRepo.RepositoryUri
@@ -176,3 +205,6 @@ Outputs:
   BackEndURL:
     Value: !Sub "https://${CloudFrontDistribution.DomainName}"
     Description: Blinky back-end URL
+  Database:
+    Value: !GetAtt SQLDatabase.Endpoint.Address
+    Description: Endpoint address for SQL database

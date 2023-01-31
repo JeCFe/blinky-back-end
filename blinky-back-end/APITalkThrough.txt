@@ -1,0 +1,19 @@
+Endpoints 
+
+/Rooms 
+    Returns list of rooms
+
+/Rooms/id?date=default today - Passed room id and date
+    Return list of desk in room 
+
+/book - 
+    body
+        deskid
+        date 
+        username
+    return ok or conflict if already book or bad request
+
+/deletebooking
+    body 
+        deskid
+        date

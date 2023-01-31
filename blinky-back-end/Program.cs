@@ -1,16 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
-using Blinky_Back_End.Model;
 using Microsoft.EntityFrameworkCore;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Blinky_Back_End.DbModels;
 using Blinky_Back_End;
 public class Program
 {
     public static void Main(string[] args)
     {
-        #region BuilderConfig
+        #region BuilderConfig 
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddDbContext<DeskDb>(opt => opt.UseInMemoryDatabase("DeskList"));
+        var connectionString = Environment.GetEnvironmentVariable("RDBConnectionString");
+        //var connectionString = builder.Configuration.GetConnectionString("db");
+        builder.Services.AddDbContext<BookingDb>(opt => opt.UseMySql(
+            connectionString,
+            ServerVersion.AutoDetect(connectionString)
+        ));
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 
         builder.Services.AddCors(options =>
         {
@@ -27,16 +34,15 @@ public class Program
         {
             c.SwaggerDoc("v1", new() { Title = "Blinky-Backend", Version = "v1" });
         });
+        builder.Services.Configure<JsonOptions>(options => options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
         #endregion
 
         #region appSetup
 
-
         var app = builder.Build();
-
         var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetService<DeskDb>();
-        SeedInitaliseDeskData(service);
+        var service = scope.ServiceProvider.GetService<BookingDb>();
+        //SeedInitaliseDeskData(service);
 
         app.UseCors();
         app.UseSwagger();
@@ -46,75 +52,94 @@ public class Program
         app.MapHealthChecks("/healthz");
         #endregion
 
-        app.MapGet("/AllDesks", async (DeskDb db) =>
+        app.MapPost("/GenerateRoom", async (BookingDb db, string RoomName, int AmountOfDesks) =>
         {
-            AllDesksResponse response = new AllDesksResponse();
-            response.desks = await db.desks.ToListAsync();
-            return Results.Ok(response);
-        })
-        .Produces<AllDesksResponse>(StatusCodes.Status200OK);
-
-        app.MapPost("/BookDesk", async (DeskDb db, string DeskId, string AssignedName) =>
-        {
+            Room r = new Room();
+            r.Name = RoomName;
+            db.rooms.Add(r);
+            for (int i = 0; i < AmountOfDesks; i++)
+            {
+                db.desks.Add(new Desk { Name = "Desk " + i.ToString() + 1, Room = r, posX = 10, posY = 10 });
+            }
             try
             {
-                var desk = await db.desks.FindAsync(DeskId);
-                if (desk.AssignedName == null) { return Results.Conflict(); }
-                desk.AssignedName = AssignedName;
-                desk.IsAvailable = false;
                 await db.SaveChangesAsync();
-                return Results.Ok();
             }
-            catch
+            catch (DbUpdateException e)
             {
                 return Results.BadRequest();
             }
+            return Results.Ok();
         })
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status409Conflict)
         .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("/AddDesk", async (Desk desk, DeskDb db) =>
+        app.MapGet("/Rooms", async (BookingDb db) =>
         {
-            try
-            {
-                db.desks.Add(desk);
-                await db.SaveChangesAsync();
-                return Results.Created($"/AddDesk", desk);
-            }
-            catch
-            {
-                return Results.BadRequest();
-            }
+            var rooms = await db.rooms.ToListAsync();
+            return Results.Ok(new RoomsResponse { Rooms = rooms });
         })
-        .Produces(StatusCodes.Status201Created)
+        .Produces<RoomsResponse>(StatusCodes.Status200OK);
+
+        app.MapGet("/Rooms/{roomId}", async (BookingDb db, Guid roomId, DateOnly? date) =>
+        {
+            List<Booking> bookedDesks = new List<Booking>();
+            var searchDate = date ?? DateOnly.FromDateTime(DateTime.Now);
+            var allDesks = await db.desks.Where((x) => x.Room.Id == roomId).ToListAsync();
+            bookedDesks = await db.bookings.Where((x) => x.Desk.Room.Id == roomId && x.Date == searchDate).ToListAsync();
+            ViewDesksResponse response = new ViewDesksResponse(bookedDesks, allDesks);
+            return Results.Ok(response);
+        })
+        .Produces<ViewDesksResponse>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("/RemoveBooking", async (DeskDb db, Desk RequestDesk) =>
+        app.MapPost("/book", async (BookingDb db, Guid deskId, string userName, DateOnly date) =>
         {
+            var desk = await db.desks.SingleOrDefaultAsync<Desk>(d => d.Id == deskId);
+            if (desk == null) { return Results.BadRequest(); }
+            Booking booking = new()
+            {
+                Id = Guid.NewGuid(),
+                Desk = desk,
+                AssignedName = userName,
+                Date = date
+            };
+            db.bookings.Add(booking);
             try
             {
-                var desk = await db.desks.FindAsync(RequestDesk.DeskId);
-                desk.AssignedName = null;
                 await db.SaveChangesAsync();
-                return Results.Ok();
             }
-            catch
+            catch (DbUpdateException e)
             {
-                return Results.BadRequest();
+                return Results.Conflict();
             }
+            return Results.Ok();
+        })
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status409Conflict);
+
+        app.MapPost("/updatePosition", async (BookingDb db, Guid deskId, int x, int y) =>
+        {
+            var desk = await db.desks.SingleOrDefaultAsync<Desk>(d => d.Id == deskId);
+            if (desk == null) { return Results.BadRequest(); }
+            desk.posX = x;
+            desk.posY = y;
+            await db.SaveChangesAsync();
+            return Results.Ok();
         })
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
         app.Run();
 
-
-        async void SeedInitaliseDeskData(DeskDb db)
+        async void SeedInitaliseDeskData(BookingDb db)
         {
-            for (int i = 0; i < 16; i++)
+            Room r = new Room();
+            r.Name = "NewPositionalDesks";
+            db.rooms.Add(r);
+            for (int i = 0; i < 9; i++)
             {
-                db.Add(new Desk { DeskId = "desk" + i.ToString(), AssignedName = "", IsAvailable = true });
+                db.desks.Add(new Desk { Name = "test" + i.ToString(), Room = r, posX = 10, posY = 10 });
             }
             await db.SaveChangesAsync();
         }
