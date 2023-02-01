@@ -4,15 +4,69 @@ Backend support for desk booking Blinky TS Rest Project
 
 ## API Reference
 
-#### Example
+#### Generate Room
+
+Takes a room name and amount of desks to generate a new room which is saved in the database.
+Returns status code 200 if successful.
+Return 400 for a bad request.
 
 ```http
-  GET /example
+  POST /GenerateRoom
 ```
 
-| Parameter | Type     | Description            |
-| :-------- | :------- | :--------------------- |
-| `api_key` | `string` | This is an example api |
+| Parameter       | Type     | Description                                            |
+| :-------------- | :------- | :----------------------------------------------------- |
+| `RoomName`      | `string` | Define the name of the room to be generated            |
+| `AmountOfDesks` | `int`    | Define the amount of desk to be added to added to room |
+
+#### Generate Room
+
+Returns all room stored in the database.
+
+```http
+  GET /Room
+```
+
+#### View room bookings on specified dates
+
+Returns all desks with their booked status, and any relevent assigned names on the specified date.
+
+```http
+  GET /Room/{roomId}
+```
+
+| Parameter | Type       | Description                                                     |
+| :-------- | :--------- | :-------------------------------------------------------------- |
+| `roomId`  | `Guid`     | ID of the room                                                  |
+| `date`    | `DateOnly` | ISO 8601 Date Only, used for getting bookings on specified date |
+
+#### Book desk on specified date
+
+Books specified desk on specified date
+
+```http
+  POST /book
+```
+
+| Parameter  | Type       | Description                                                     |
+| :--------- | :--------- | :-------------------------------------------------------------- |
+| `deskId`   | `Guid`     | ID of the room                                                  |
+| `userName` | `string`   | Name of person booking desk                                     |
+| `date`     | `DateOnly` | ISO 8601 Date Only, used for getting bookings on specified date |
+
+#### Update desk display position
+
+Books specified desk on specified date
+
+```http
+  POST /book
+```
+
+| Parameter | Type   | Description                |
+| :-------- | :----- | :------------------------- |
+| `deskId`  | `Guid` | ID of the room             |
+| `x`       | `int`  | Position of desk in x axis |
+| `y`       | `int`  | Position of desk in y axis |
 
 ## Running Locally
 

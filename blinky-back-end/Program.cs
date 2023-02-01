@@ -40,10 +40,6 @@ public class Program
         #region appSetup
 
         var app = builder.Build();
-        var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetService<BookingDb>();
-        //SeedInitaliseDeskData(service);
-
         app.UseCors();
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint(
@@ -87,7 +83,8 @@ public class Program
             var searchDate = date ?? DateOnly.FromDateTime(DateTime.Now);
             var allDesks = await db.desks.Where((x) => x.Room.Id == roomId).ToListAsync();
             bookedDesks = await db.bookings.Where((x) => x.Desk.Room.Id == roomId && x.Date == searchDate).ToListAsync();
-            ViewDesksResponse response = new ViewDesksResponse(bookedDesks, allDesks);
+            var room = await db.rooms.FirstOrDefaultAsync(room => room.Id == roomId);
+            ViewDesksResponse response = new ViewDesksResponse(bookedDesks, allDesks, room);
             return Results.Ok(response);
         })
         .Produces<ViewDesksResponse>(StatusCodes.Status200OK)
@@ -131,18 +128,6 @@ public class Program
         .Produces(StatusCodes.Status400BadRequest);
 
         app.Run();
-
-        async void SeedInitaliseDeskData(BookingDb db)
-        {
-            Room r = new Room();
-            r.Name = "NewPositionalDesks";
-            db.rooms.Add(r);
-            for (int i = 0; i < 9; i++)
-            {
-                db.desks.Add(new Desk { Name = "test" + i.ToString(), Room = r, posX = 10, posY = 10 });
-            }
-            await db.SaveChangesAsync();
-        }
     }
 
 }
