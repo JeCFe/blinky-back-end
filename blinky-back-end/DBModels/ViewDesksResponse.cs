@@ -3,9 +3,11 @@ namespace Blinky_Back_End.DbModels;
 public class ViewDesksResponse
 {
     public List<DeskAvailability> DesksAvailability { get; }
+    public string RoomName { get; }
 
-    public ViewDesksResponse(List<Booking> bookings, List<Desk> desks)
+    public ViewDesksResponse(List<Booking> bookings, List<Desk> desks, Room room)
     {
+        RoomName = room.Name ?? "Undefined room name";
         DesksAvailability = desks.Select((desk) =>
         {
             DeskAvailability deskAvailability = new DeskAvailability();
