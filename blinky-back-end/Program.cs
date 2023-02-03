@@ -81,8 +81,8 @@ public class Program
 
         app.MapGet("/Rooms", async (BookingDb db) =>
         {
-            var rooms = await db.rooms.ToListAsync();
-            return Results.Ok(new RoomsResponse { Rooms = rooms });
+            var Rooms = await db.rooms.ToListAsync();
+            return Results.Ok(new RoomsResponse { Rooms = Rooms });
         })
         .Produces<RoomsResponse>(StatusCodes.Status200OK);
 
@@ -119,6 +119,7 @@ public class Program
             {
                 return Results.Conflict();
             }
+
             return Results.Ok();
         })
         .Produces(StatusCodes.Status200OK)
