@@ -2,8 +2,8 @@ namespace Blinky_Back_End.DbModels;
 
 public class ViewDesksResponse
 {
-    public List<DeskAvailability> DesksAvailability { get; }
-    public string RoomName { get; }
+    public List<DeskAvailability> DesksAvailability { get; set; }
+    public string RoomName { get; set; }
 
     public ViewDesksResponse(List<Booking> bookings, List<Desk> desks, Room room)
     {
