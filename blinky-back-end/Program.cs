@@ -10,12 +10,21 @@ public class Program
     {
         #region BuilderConfig 
         var builder = WebApplication.CreateBuilder(args);
-        var connectionString = Environment.GetEnvironmentVariable("RDBConnectionString");
-        //var connectionString = builder.Configuration.GetConnectionString("db");
-        builder.Services.AddDbContext<BookingDb>(opt => opt.UseMySql(
-            connectionString,
-            ServerVersion.AutoDetect(connectionString)
-        ));
+
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddDbContext<BookingDb>(opt => opt.UseInMemoryDatabase("TestDB"));
+        }
+        else
+        {
+            var connectionString = Environment.GetEnvironmentVariable("RDBConnectionString");
+            builder.Services.AddDbContext<BookingDb>(opt => opt.UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString)
+            ));
+        }
+
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
