@@ -85,7 +85,7 @@ To run this application on docker:
 Create a release of the project
 
 ```bash
-  dotnet public -c Release
+  dotnet publish -c Release
 ```
 
 Build Docker image
